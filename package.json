@@ -1,8 +1,8 @@
 {
-  "name": "aluguel-carros-nest",
+  "name": "loja-de-tenis",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Santucci",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
