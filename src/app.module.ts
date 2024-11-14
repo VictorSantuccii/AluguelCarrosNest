@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { TestController } from './test.controller';
+import { AuthModule } from './auth/auth.module';
+import { ProtectedController } from './auth/protected-controller';
 
 @Module({
   imports: [
@@ -23,9 +25,10 @@ import { TestController } from './test.controller';
 
     }),
     UserModule,
+    AuthModule
 
   ],
-  controllers: [TestController],
+  controllers: [TestController, ProtectedController],
   providers: [],
 })
 export class AppModule {}
