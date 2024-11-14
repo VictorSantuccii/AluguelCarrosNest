@@ -1,11 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
 import { TestController } from './test.controller';
-
-
 
 @Module({
   imports: [
@@ -20,13 +17,15 @@ import { TestController } from './test.controller';
       port: Number(process.env.DATABASE_PORT),
       username: process.env.DATABASE_USER,
       entities: [`${__dirname}/**/*.entity{.js,.ts}`],
-      migrations: [`${__dirname}/migration/{.ts,*.js}`],
+      migrations: [`${__dirname}/migrations/{.ts,*.js}`],
       migrationsRun: true,
+      synchronize: false,
+
     }),
     UserModule,
 
   ],
   controllers: [TestController],
-  providers: [UserService],
+  providers: [],
 })
 export class AppModule {}
