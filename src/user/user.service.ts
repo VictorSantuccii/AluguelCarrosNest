@@ -9,18 +9,20 @@ import {
     validateCpfUnique,
     validateEmailUnique,
     validatePhoneFormat,
-    validatePhoneUnique
-}
-    from './validations/user-validation.utils';
+    validatePhoneUnique,
+    validateEmailExists,
+    validateUserExists,
+} from './validations/user-validation.utils';
+import { UpdateUserDto } from './interfaces/updateUser.dto';
+
 
 @Injectable()
 export class UserService {
 
-    constructor
-        (
-            @InjectRepository(UserEntity)
-            private readonly userRepository: Repository<UserEntity>
-        ) { }
+    constructor(
+        @InjectRepository(UserEntity)
+        private readonly userRepository: Repository<UserEntity>
+    ) { }
 
     async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
         const user = await this.findUserByEmail(createUserDto.email).catch(() => undefined)
@@ -31,53 +33,80 @@ export class UserService {
         validatePhoneFormat(createUserDto.phone);
         validateEmailFormat(createUserDto.email);
 
-
         const saltOrRounds = 10;
         const passwordHashed = await hash(createUserDto.password, saltOrRounds);
-
 
         return this.userRepository.save({
             ...createUserDto,
             password: passwordHashed,
-
-        })
-
-
+        });
     }
 
     async getAllUsers(): Promise<UserEntity[]> {
         return this.userRepository.find();
     }
 
-
     async findUserById(userId: number): Promise<UserEntity> {
         const user = await this.userRepository.findOne({
-            where: {
-                id: userId
-            }
+            where: { id: userId }
         });
 
         if (!user) {
-            throw new NotFoundException(`Usuário ${userId} não existe.`)
+            throw new NotFoundException(`Usuário ${userId} não existe.`);
         }
 
         return user;
-
     }
 
-
     async findUserByEmail(email: string): Promise<UserEntity> {
-        const user = await this.userRepository.findOne({
-            where: {
-                email,
-            }
+        await validateEmailExists(email, this.userRepository);
+    
+        return this.userRepository.findOne({
+            where: { email },
         });
+    }
 
-        if (!user) {
-            throw new NotFoundException(`Email: ${email} não existe.`)
+    async updateUser(userId: number, updateUserDto: UpdateUserDto): Promise<UserEntity> {
+        const user = await this.findUserById(userId);
+    
+        
+        if (updateUserDto.email && updateUserDto.email !== user.email) {
+            await validateEmailUnique(updateUserDto.email, this.userRepository);
+            validateEmailFormat(updateUserDto.email);
         }
+    
+       
+        if (updateUserDto.cpf && updateUserDto.cpf !== user.cpf) {
+            await validateCpfUnique(updateUserDto.cpf, this.userRepository);
+        }
+    
+        
+        if (updateUserDto.phone && updateUserDto.phone !== user.phone) {
+            await validatePhoneUnique(updateUserDto.phone, this.userRepository);
+            validatePhoneFormat(updateUserDto.phone);
+        }
+    
+       
+        if (updateUserDto.password && updateUserDto.password !== user.password) {
+            const saltOrRounds = 10;
+       
+            updateUserDto.password = await hash(updateUserDto.password, saltOrRounds);
+        } else {
+           
+            updateUserDto.password = user.password;
+        }
+    
+        
+        Object.assign(user, updateUserDto);
+    
+        return this.userRepository.save(user);
+    }
+    
+    async deleteUser(userId: number): Promise<void> {
+        const user = await validateUserExists(userId, this.userRepository);
 
-        return user;
+        await validateEmailExists(user.email, this.userRepository);
 
+        await this.userRepository.remove(user);
     }
 }

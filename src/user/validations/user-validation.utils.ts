@@ -1,6 +1,29 @@
 import { BadGatewayException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../entities/user.entity';
+import { NotFoundException } from '@nestjs/common';
+
+
+export async function validateUserExists(
+  userId: number,
+  userRepository: Repository<UserEntity>,
+): Promise<UserEntity> {
+  const user = await userRepository.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new NotFoundException(`Usuário com ID ${userId} não existe.`);
+  }
+  return user;
+}
+
+export async function validateEmailExists(
+  email: string,
+  userRepository: Repository<UserEntity>,
+): Promise<void> {
+  const user = await userRepository.findOne({ where: { email } });
+  if (!user) {
+    throw new NotFoundException(`Email: ${email} não existe no sistema.`);
+  }
+}
 
 export async function validateEmailUnique(
   email: string,
@@ -57,4 +80,6 @@ export function validateEmailFormat(email: string): void {
   if (!emailPattern.test(email)) {
     throw new BadGatewayException('O email deve ser válido e estar no formato correto.');
   }
+
+  
 }
